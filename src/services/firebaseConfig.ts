@@ -5,14 +5,19 @@ import { getReactNativePersistence } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+function limpiarEnv(val?: string): string {
+  if (!val) return '';
+  return val.trim().replace(/^["']|["']$/g, '');
+}
+
 // Configuración de Firebase obtenida de las variables de entorno
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'MOCK_API_KEY',
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'mock.firebaseapp.com',
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'mock-cartelera',
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'mock.appspot.com',
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '1234567890',
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '1:1234567890:web:abcdef123456',
+  apiKey: limpiarEnv(process.env.EXPO_PUBLIC_FIREBASE_API_KEY) || 'MOCK_API_KEY',
+  authDomain: limpiarEnv(process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN) || 'mock.firebaseapp.com',
+  projectId: limpiarEnv(process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID) || 'mock-cartelera',
+  storageBucket: limpiarEnv(process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET) || 'mock.appspot.com',
+  messagingSenderId: limpiarEnv(process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID) || '1234567890',
+  appId: limpiarEnv(process.env.EXPO_PUBLIC_FIREBASE_APP_ID) || '1:1234567890:web:abcdef123456',
 };
 
 // Inicialización de la aplicación de Firebase (singleton)

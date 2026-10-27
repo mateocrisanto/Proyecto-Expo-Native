@@ -3,12 +3,17 @@ import { DetalleObra, ItemBusqueda, MiembroElenco, TipoObra } from '../types';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
+function limpiarEnv(val?: string): string {
+  if (!val) return '';
+  return val.trim().replace(/^["']|["']$/g, '');
+}
+
 /**
  * Obtiene los headers y parámetros de autenticación para TMDB
  */
 function getAuthHeaders(): { headers: Record<string, string>; queryParams: string } {
-  const token = process.env.EXPO_PUBLIC_TMDB_TOKEN?.trim();
-  const apiKey = process.env.EXPO_PUBLIC_TMDB_API_KEY?.trim();
+  const token = limpiarEnv(process.env.EXPO_PUBLIC_TMDB_TOKEN);
+  const apiKey = limpiarEnv(process.env.EXPO_PUBLIC_TMDB_API_KEY);
 
   const headers: Record<string, string> = {
     'Accept': 'application/json',
@@ -24,6 +29,16 @@ function getAuthHeaders(): { headers: Record<string, string>; queryParams: strin
   }
 
   return { headers, queryParams };
+}
+
+function validarCredencialesTMDB() {
+  const token = limpiarEnv(process.env.EXPO_PUBLIC_TMDB_TOKEN);
+  const apiKey = limpiarEnv(process.env.EXPO_PUBLIC_TMDB_API_KEY);
+  if (!token && !apiKey) {
+    throw new Error(
+      'Falta configurar el Token o API Key de TMDB. Por favor agrega tu EXPO_PUBLIC_TMDB_TOKEN en el archivo .env.'
+    );
+  }
 }
 
 /**
@@ -50,6 +65,8 @@ export async function buscarObras(
   if (!texto) {
     return { resultados: [], totalPaginas: 0, totalResultados: 0 };
   }
+
+  validarCredencialesTMDB();
 
   const { headers, queryParams } = getAuthHeaders();
   let url = `${TMDB_BASE_URL}/search/multi?query=${encodeURIComponent(texto)}&include_adult=false&language=es-MX&page=${pagina}`;
@@ -101,6 +118,7 @@ export async function buscarObras(
  * Obtiene el detalle de una película o serie incluyendo elenco en una sola petición (RF3)
  */
 export async function obtenerDetalle(tipo: TipoObra, id: number): Promise<DetalleObra> {
+  validarCredencialesTMDB();
   const { headers, queryParams } = getAuthHeaders();
   let url = `${TMDB_BASE_URL}/${tipo}/${id}?append_to_response=credits&language=es-MX`;
   if (queryParams) {
