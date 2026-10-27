@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Reglas para la cartelera personal de cada usuario
+    match /usuarios/{userId}/mi_lista/{itemId} {
+      
+      // Función para verificar que el usuario está autenticado y es dueño del documento
+      function esPropietario() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      // Validación de los datos de entrada
+      function datosValidos() {
+        let datos = request.resource.data;
+        
+        let tipoValido = datos.tipo in ['movie', 'tv'];
+        let estadoValido = datos.estado in ['por_ver', 'viendo', 'vista'];
+        let comentarioValido = datos.comentario is string && datos.comentario.size() <= 500;
+        let tmdbIdValido = datos.tmdbId is number;
+        let tituloValido = datos.titulo is string && datos.titulo.size() > 0;
+        
+        // Solo se califica (entre 1 y 5) si el estado es 'vista'; en otro caso debe ser nulo
+        let calificacionValida = (datos.estado == 'vista' && 
+                                  datos.calificacionPersonal is number && 
+                                  datos.calificacionPersonal >= 1 && 
+                                  datos.calificacionPersonal <= 5) || 
+                                 (datos.estado != 'vista' && 
+                                  datos.calificacionPersonal == null);
+
+        return tipoValido && estadoValido && comentarioValido && tmdbIdValido && tituloValido && calificacionValida;
+      }
+
+      // Lectura: solo el dueño autenticado
+      allow read: if esPropietario();
+
+      // Creación y actualización: el dueño y datos conformes a las reglas de negocio
+      allow create: if esPropietario() && datosValidos();
+      allow update: if esPropietario() && datosValidos();
+
+      // Eliminación: solo el dueño
+      allow delete: if esPropietario();
+    }
+
+    // Por defecto se deniega cualquier otro acceso
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
